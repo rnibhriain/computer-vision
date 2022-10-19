@@ -236,11 +236,8 @@ Mat findPieces () {
 	Mat static_background_image = imread(background_filename, -1);
 	Mat current_image = static_background_image;
 
-	Mat temp_image, temp_image2, hls_image;
 	string black_pieces_filename("Media/DraughtsGame1BlackPieces.jpg");
 	Mat black_pieces_image = imread(black_pieces_filename, -1);
-
-
 	Mat black_pieces = BackProjection(static_background_image, black_pieces_image);
 	imshow("blackPieces", black_pieces);
 
@@ -278,13 +275,22 @@ void partTwo(Mat& current_img) {
 	imshow("Perspective change", result);
 
 	int squareSize = current_img.rows / 8;
-
-	Point2f source2[4] = { { Point2f(current_img.cols / 8*5,0) }, { Point2f(current_img.cols / 8*5,squareSize)}, {Point2f(current_img.cols/8*6, 0)}, { Point2f(current_img.cols/8*6,squareSize)} };
 	Mat end;
-	perspective_matrix = getPerspectiveTransform(source2,destination);
-	warpPerspective(result, end, perspective_matrix, result.size());
-	imshow("Perspective2change", end);
+	for (int i = 0; i < current_img.rows; i+=current_img.rows/8) {
+		for (int j = 0; j < current_img.cols; j+= current_img.cols/8) {
+			Point2f source2[4] = { { Point2f(j,i) }, { Point2f(j,i+current_img.rows/8)}, {Point2f(j+current_img.cols/8, i)}, { Point2f(j + current_img.cols / 8,i + current_img.rows / 8)} };
+			
+			perspective_matrix = getPerspectiveTransform(source2, destination);
+			warpPerspective(result, end, perspective_matrix, result.size());
+			imshow("Perspective2change", end);
+		}
+	}
 
+	Point2f source2[4] = { { Point2f(current_img.cols-current_img.cols/8,current_img.rows - current_img.rows / 8) }, { Point2f(current_img.cols - current_img.cols / 8,current_img.rows)}, {Point2f(current_img.cols, current_img.rows - current_img.rows / 8)}, { Point2f(current_img.cols, current_img.rows)} };
+
+	perspective_matrix = getPerspectiveTransform(source2, destination);
+	warpPerspective(result, end, perspective_matrix, result.size());
+	imshow("Perspective3change", end);
 }
 
 
