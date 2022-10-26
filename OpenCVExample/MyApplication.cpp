@@ -170,8 +170,6 @@ const int GROUND_TRUTH_FOR_DRAUGHTSGAME1_VIDEO_MOVES[][3] = {
 
 
 
-
-
 class DraughtsBoard
 {
 private:
@@ -236,61 +234,206 @@ Mat findPieces () {
 	Mat static_background_image = imread(background_filename, -1);
 	Mat current_image = static_background_image;
 
+	// First step blurring
+	Mat blurred;
+	medianBlur(static_background_image, blurred, 3);
+	medianBlur(blurred, blurred, 3);
+
+	// Backprojection 
 	string black_pieces_filename("Media/DraughtsGame1BlackPieces.jpg");
 	Mat black_pieces_image = imread(black_pieces_filename, -1);
-	Mat black_pieces = BackProjection(static_background_image, black_pieces_image);
-	imshow("blackPieces", black_pieces);
+	Mat black_pieces = BackProjection(blurred, black_pieces_image);
+
 
 	string white_squares_filename("Media/DraughtsGame1WhiteSquares.jpg");
 	Mat white_squares_image = imread(white_squares_filename, -1);
-	Mat white_squares = BackProjection(static_background_image, white_squares_image);
-	imshow("whiteSquares", white_squares);
+	Mat white_squares = BackProjection(blurred, white_squares_image);
+
+	Mat output1 = JoinImagesHorizontally(black_pieces, "Black Pieces", white_squares, "White Squares", 4);
 
 	string white_pieces_filename("Media/DraughtsGame1WhitePieces.jpg");
 	Mat white_pieces_image = imread(white_pieces_filename, -1);
-	Mat white_pieces = BackProjection(static_background_image, white_pieces_image);
-	imshow("whitePieces", white_pieces);
+	Mat white_pieces = BackProjection(blurred, white_pieces_image);
+
+	Mat output2 = JoinImagesHorizontally(output1, "Original Image", white_pieces, "White Pieces", 4);
 
 	string black_squares_filename("Media/DraughtsGame1BlackSquares.jpg");
 	Mat black_squares_image = imread(black_squares_filename, -1);
-	Mat black_squares = BackProjection(static_background_image, black_squares_image);
-	imshow("blackSquares", black_squares);
+	Mat black_squares = BackProjection(blurred, black_squares_image);
 
-	current_image.setTo(Scalar(0, 255, 0), black_pieces);
-	current_image.setTo(Scalar(255, 0, 0), white_pieces);
+	Mat output3 = JoinImagesHorizontally(output2, "Original Image", black_squares, "Black Pieces", 4);
+
+	imshow("Output", output3);
+
+	// Threshold 
+
+	Mat thresh;
+	threshold(black_pieces, thresh, 200, 255, THRESH_BINARY);
+
+	Mat closed_image;
+	Mat five_by_five_element(5, 5, CV_8U, Scalar(1));
+	morphologyEx(thresh, closed_image,
+		MORPH_CLOSE, five_by_five_element);
+	dilate(closed_image, closed_image, Mat());
+	imshow("Binary mage1", closed_image);
+
+	current_image.setTo(Scalar(0, 255, 0), closed_image);
+
+	threshold(white_pieces, thresh, 30, 255, THRESH_BINARY);
+	morphologyEx(thresh, closed_image,
+		MORPH_CLOSE, five_by_five_element);
+	dilate(closed_image, closed_image, Mat());
+	imshow("Binary mage", closed_image);
+
+	current_image.setTo(Scalar(255, 0, 0), closed_image);
+
 	current_image.setTo(Scalar(0, 0, 255), black_squares);
+
 	current_image.setTo(Scalar(0, 255, 255), white_squares);
 
-	imshow("Combined Image", current_image);
+	imshow("Part One Result", current_image);
 
 	return current_image;
 }
 
 void partTwo(Mat& current_img) {
+
 	Point2f source[4] = {{ 114.0, 17.0 }, { 53.0, 245.0 }, { 355.0, 20.0 }, { 433.0, 241.0 }};
 	Point2f destination[4] = { {0.0, 0.0}, {Point2f(0.0, current_img.rows)}, {Point2f(current_img.cols,0.0)},  {Point2f(current_img.cols, current_img.rows)} };
+
 	Mat result;
 	Mat perspective_matrix = getPerspectiveTransform(source, destination); 
+
 	warpPerspective(current_img, result, perspective_matrix,result.size());
 	imshow("Perspective change", result);
 
-	int squareSize = current_img.rows / 8;
+	cout << "first part" << result.at<Vec3b>(result.cols / 2, result.rows / 2) << "\n";
+
 	Mat end;
-	for (int i = 0; i < current_img.rows; i+=current_img.rows/8) {
-		for (int j = 0; j < current_img.cols; j+= current_img.cols/8) {
-			Point2f source2[4] = { { Point2f(j,i) }, { Point2f(j,i+current_img.rows/8)}, {Point2f(j+current_img.cols/8, i)}, { Point2f(j + current_img.cols / 8,i + current_img.rows / 8)} };
+
+	for (int i = 0; i < result.rows; i += result.rows/8) {
+
+		for (int j = 0; j < result.cols; j += result.cols/8) {
+		
+			Point2f source2[4] = { { Point2f(j,i) }, { Point2f(j,i+ result.rows/8)}, {Point2f(j+ result.cols/8, i)}, { Point2f(j + result.cols / 8,i + result.rows / 8)} };
+			Point2f destination2[4] = { {0.0, 0.0}, {Point2f(0.0, result.rows)}, {Point2f(result.cols,0.0)},  {Point2f(result.cols, result.rows)} };
+			Mat perspective_matrix2 = getPerspectiveTransform(source2, destination2);
+			warpPerspective(result, end, perspective_matrix2, end.size());
 			
-			perspective_matrix = getPerspectiveTransform(source2, destination);
-			warpPerspective(result, end, perspective_matrix, result.size());
-			imshow("Perspective2change", end);
+			Scalar middlePixel = end.at<Vec3b>(end.cols/2, end.rows/2);
+
+			cout << middlePixel << "\n";
+
+			if (middlePixel[0] == 0 && middlePixel[1] == 255 && middlePixel[2] == 0) {
+				cout << "black piece \n";
+			} else if (middlePixel[0] == 255 && middlePixel[1] == 0 && middlePixel[2] == 0) {
+				cout << "white piece \n";
+			} else if (middlePixel[0] == 0 && middlePixel[1] == 0 && middlePixel[2] == 255) {
+				cout << "black square \n";
+			} else if (middlePixel[0] == 0 && middlePixel[1] == 255 && middlePixel[2] == 255) {
+				cout << "white square \n";
+			}
+
+			/*
+			Mat hsv_image;
+
+			cvtColor(end, hsv_image, COLOR_BGR2HSV);
+
+			split(hsv_image, hsv_planes);
+
+			// make histogram with color element ('h' in hsv means 'hue')
+			int hHistSize = 180;
+			float hRange[] = { 0, 180 }, vRange[] = { 0, 100 };
+			const float* hHistRange = { hRange };
+
+			Mat  h_hist;
+
+			calcHist(&hsv_planes[0], 1, 0, Mat(), h_hist, 1, &hHistSize, &hHistRange, true, false);
+
+			imshow("histogram", h_hist);
+
+			int hHist_w = 360; int hHist_h = 400;
+			int hbin_w = round((double)hHist_w / hHistSize);
+
+			Mat hHistImage(hHist_h, hHist_w, CV_8UC3, Scalar(0, 0, 0));
+			normalize(h_hist, h_hist, 0, h_hist.rows, NORM_MINMAX, -1, Mat());
+			int highestY = 0;
+			int highestX = 0;
+
+			for (int i = 1; i < hHistSize; i++)
+			{
+				line(hHistImage, Point(hbin_w * (i - 1), hHist_h - cvRound(h_hist.at<float>(i - 1))), Point(hbin_w * (i), hHist_h - cvRound(h_hist.at<float>(i))), Scalar(255, 0, 0), 2, 8, 0);
+
+				if (hHist_h - cvRound(h_hist.at<float>(i)) > highestY) {
+					highestX = hbin_w * (i);
+					highestY = hHist_h - cvRound(h_hist.at<float>(i));
+				}
+			}
+
+			imshow("calcHist Demo", hHistImage);
+
+			cout << "most used color is " << highestX << endl;*/
+			
 		}
+
 	}
 
-	Point2f source2[4] = { { Point2f(current_img.cols-current_img.cols/8,current_img.rows - current_img.rows / 8) }, { Point2f(current_img.cols - current_img.cols / 8,current_img.rows)}, {Point2f(current_img.cols, current_img.rows - current_img.rows / 8)}, { Point2f(current_img.cols, current_img.rows)} };
+}
 
-	perspective_matrix = getPerspectiveTransform(source2, destination);
-	warpPerspective(result, end, perspective_matrix, result.size());
-	imshow("Perspective3change", end);
+void partThree(VideoCapture video) {
+
+
+}
+
+
+void partFour (Mat& static_img) {
+
+	// Hough Lines
+	Mat canny_edge_image;
+	Canny(static_img, canny_edge_image, 80, 150);
+	vector<Vec2f> hough_lines;
+	// raised the threshold
+	HoughLines(canny_edge_image, hough_lines, 1, PI / 200.0, 150);
+	Mat hough_lines_image = static_img.clone();
+	DrawLines(hough_lines_image, hough_lines, Scalar(0, 255, 0));
+	imshow("hough", hough_lines_image);
+
+	// Use of contour following and straight line segment extraction.
+	vector<vector<Point>> contours;
+	vector<Vec4i> hierarchy;
+	findContours(canny_edge_image, contours, hierarchy, RETR_TREE, CHAIN_APPROX_NONE);
+
+
+	for (int contour_number = 0;
+		(contour_number < contours.size()); contour_number++) {
+		Scalar colour(rand() & 0xFF, rand() & 0xFF, rand() & 0xFF); drawContours(static_img, contours, contour_number,
+			colour, 1, 8, hierarchy);
+	}
+
+
+	// find chessboard
+	Size patternsize(8, 6);
+	Mat output;
+	Mat input = static_img.clone();
+
+
+	vector<Point2f> corners; //this will be filled by the detected corners
+
+   //CALIB_CB_FAST_CHECK saves a lot of time on images
+   //that do not contain any chessboard corners
+	bool patternfound = findChessboardCorners(input, patternsize, corners);
+
+	drawChessboardCorners(input, patternsize, Mat(corners), patternfound);
+	// findChessboardCorners
+	//findChessboardCorners(static_img, patternsize, output, CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE +CALIB_CB_FAST_CHECK);
+	imshow("findChessboard", input);
+
+
+}
+
+
+void partFive () {
+
 }
 
 
@@ -303,6 +446,14 @@ void MyApplication()
 	Mat pt1 = findPieces();
 
 	partTwo(pt1);
+	partThree(video);
+	
+	string background_file("Media/DraughtsGame1.jpg");
+	Mat static_background_img = imread(background_file, -1);
+
+	partFour(static_background_img);
+
+	partFive();
 
 	int pieces[32];
 	string black_pieces_filename("Media/DraughtsGame1BlackPieces.jpg");
@@ -315,6 +466,7 @@ void MyApplication()
 	Mat white_squares_image = imread(white_squares_filename, -1);
 	string background_filename("Media/DraughtsGame1EmptyBoard.JPG");
 	Mat static_background_image = imread(background_filename, -1);
+
 	if ((!video.isOpened()) || (black_pieces_image.empty()) || (white_pieces_image.empty()) || (black_squares_image.empty()) || (white_squares_image.empty())  || (static_background_image.empty()))
 	{
 		// Error attempting to load something.
