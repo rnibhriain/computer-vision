@@ -81,9 +81,11 @@ const string GROUND_TRUTH_FOR_BOARD_IMAGES[][3] = {
 	{"DraughtsGame1Move61.JPG", "4,9", "K2,11,19,20,29"},
 	{"DraughtsGame1Move62.JPG", "4,9", "K2,11,19,20,25"},
 	{"DraughtsGame1Move63.JPG", "4,14", "K2,11,19,20,25"},
-	{"DraughtsGame1Move64.JPG", "4", "K2,11,15,19,20"},
-	{"DraughtsGame1Move65.JPG", "8", "K2,11,15,19,20,29"},
-	{"DraughtsGame1Move66.JPG", "", "K2,K4,15,19,20,29"}
+	{"DraughtsGame1Move64.JPG", "4,14", "K2,11,19,20,22"},
+	{"DraughtsGame1Move65.JPG", "4,18", "K2,11,19,20,22"},
+	{"DraughtsGame1Move66.JPG", "4", "K2,11,15,19,20"},
+	{"DraughtsGame1Move67.JPG", "8", "K2,11,15,19,20"},
+	{"DraughtsGame1Move68.JPG", "", "K2,K4,15,19,20"}
 };
 
 // Data provided:  Approx. frame number, From square number, To square number
@@ -220,14 +222,6 @@ void DraughtsBoard::loadGroundTruth(string pieces, int man_type, int king_type)
 
 
 
-
-/// <summary>
-/// 
-/// THIS IS WHERE THE CODE SHOULD GO ///
-/// 
-/// </summary>
-/// 
-
 Mat findPieces () {
 
 	string background_filename("Media/DraughtsGame1.jpg");
@@ -269,13 +263,14 @@ Mat findPieces () {
 
 	Mat thresh;
 	threshold(black_pieces, thresh, 200, 255, THRESH_BINARY);
+	adaptiveThreshold(black_pieces, thresh, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 15, -5);
 
 	Mat closed_image;
 	Mat five_by_five_element(5, 5, CV_8U, Scalar(1));
-	morphologyEx(thresh, closed_image,
+	morphologyEx(thresh, closed_image, 
 		MORPH_CLOSE, five_by_five_element);
 	dilate(closed_image, closed_image, Mat());
-	imshow("Binary mage1", closed_image);
+	imshow("Binary mage1", thresh);
 
 	current_image.setTo(Scalar(0, 255, 0), closed_image);
 
@@ -296,6 +291,145 @@ Mat findPieces () {
 	return current_image;
 }
 
+bool isBlackSquare(int col, int row) {
+	switch (col) {
+		case 0:
+			switch (row) {
+			case 1:
+				return true;
+			case 3:
+				return true;
+			case 5:
+				return true;
+			case 7:
+				return true;
+			}
+			return false;
+		case 1:
+			switch (row) {
+			case 0:
+				return true;
+			case 2:
+				return true;
+			case 4:
+				return true;
+			case 6:
+				return true;
+			}
+			return false;
+		case 2:
+			switch (row) {
+			case 1:
+				return true;
+			case 3:
+				return true;
+			case 5:
+				return true;
+			case 7:
+				return true;
+			}
+			return false;
+		case 3:
+			switch (row) {
+			case 0:
+				return true;
+			case 2:
+				return true;
+			case 4:
+				return true;
+			case 6:
+				return true;
+			}
+			return false;
+		case 4:
+			switch (row) {
+			case 1:
+				return true;
+			case 3:
+				return true;
+			case 5:
+				return true;
+			case 7:
+				return true;
+			}
+			return false;
+		case 5:
+			switch (row) {
+			case 0:
+				return true;
+			case 2:
+				return true;
+			case 4:
+				return true;
+			case 6:
+				return true;
+			}
+			return false;
+		case 6: 
+			switch (row) {
+			case 1:
+				return true;
+			case 3:
+				return true;
+			case 5:
+				return true;
+			case 7:
+				return true;
+			}
+			return false;
+		case 7:
+			switch (row) {
+			case 0:
+				return true;
+			case 2:
+				return true;
+			case 4:
+				return true;
+			case 6:
+				return true;
+			}
+			return false;
+	}
+
+	return false;
+}
+
+int piece(Mat& img) {
+	Vec3b colours;
+	int black_pixels = 0;
+	int white_pixels = 0;
+	int empty_piece = 0;
+
+	for (int j = 0; j < (img.cols); j += 1) {
+		for (int i = 0; i < (img.rows); i += 1) {
+			Vec3b colours = img.at<Vec3b>(i, j);
+			//cout << colours;
+			if ((colours[0] == 0 && colours[1] == 255 && colours[2] == 0)) {
+				black_pixels++;
+			} else if (colours[0] == 0 && colours[1] == 0 && colours[2] == 255) {
+				white_pixels++;
+			} else {
+				empty_piece++;
+			}
+		}
+	}
+
+	cout << "black : " << black_pixels << " white_pixels: " << white_pixels << " empty: " << empty_piece << "\n";
+
+	if (black_pixels > white_pixels) {
+		return 0;
+	}
+	else if (white_pixels > black_pixels) {
+		return 1;
+	}
+	else {
+
+		return 2;
+	}
+
+
+}
+
 void partTwo(Mat& current_img) {
 
 	Point2f source[4] = {{ 114.0, 17.0 }, { 53.0, 245.0 }, { 355.0, 20.0 }, { 433.0, 241.0 }};
@@ -307,86 +441,87 @@ void partTwo(Mat& current_img) {
 	warpPerspective(current_img, result, perspective_matrix,result.size());
 	imshow("Perspective change", result);
 
-	cout << "first part" << result.at<Vec3b>(result.cols / 2, result.rows / 2) << "\n";
-
 	Mat end;
 
+	int indexRow = result.rows/8;
+	int indexCol = result.cols/8;
+
+	end = result(Rect(indexCol*5, 0, indexCol, indexRow));
+	piece(end);
+
+	cout << "\n";
+
+	int rowNum = 0;
+	int colNum = 0;
+	for (int j = 0; j < (result.cols); j += (indexCol)) {
+
+		for (int i = 0; i < (result.rows - indexRow); i += (indexRow)) {
+
+			Mat end = result(Rect(j, i, indexCol, indexRow));
+
+			if (isBlackSquare( colNum, rowNum) == true) {
+				
+				cout << "ROw: " << rowNum << " Col: " << colNum << " : " << piece(end) << "\n";
+			}
+
+			rowNum++;
+
+		}
+		rowNum = 0;
+		colNum++;
+	}
+
+	/*
 	for (int i = 0; i < result.rows; i += result.rows/8) {
 
 		for (int j = 0; j < result.cols; j += result.cols/8) {
 		
-			Point2f source2[4] = { { Point2f(j,i) }, { Point2f(j,i+ result.rows/8)}, {Point2f(j+ result.cols/8, i)}, { Point2f(j + result.cols / 8,i + result.rows / 8)} };
+			Point2f source2[4] = { { Point2f(j,i) }, { Point2f(j,i + result.rows / 8)}, {Point2f(j + result.cols / 8, i)}, { Point2f(j + result.cols / 8,i + result.rows / 8)} };
 			Point2f destination2[4] = { {0.0, 0.0}, {Point2f(0.0, result.rows)}, {Point2f(result.cols,0.0)},  {Point2f(result.cols, result.rows)} };
 			Mat perspective_matrix2 = getPerspectiveTransform(source2, destination2);
 			warpPerspective(result, end, perspective_matrix2, end.size());
 			
-			Scalar middlePixel = end.at<Vec3b>(end.cols/2, end.rows/2);
+			Vec3b middlePixel = end.at<Vec3b>(end.cols/2, end.rows/2);
+
 
 			cout << middlePixel << "\n";
 
-			if (middlePixel[0] == 0 && middlePixel[1] == 255 && middlePixel[2] == 0) {
+			if (middlePixel[2] == 0 && middlePixel[1] == 255 && middlePixel[0] == 0) {
 				cout << "black piece \n";
-			} else if (middlePixel[0] == 255 && middlePixel[1] == 0 && middlePixel[2] == 0) {
+			} else if (middlePixel[2] == 255 && middlePixel[1] == 0 && middlePixel[0] == 0) {
 				cout << "white piece \n";
-			} else if (middlePixel[0] == 0 && middlePixel[1] == 0 && middlePixel[2] == 255) {
+			} else if (middlePixel[2] == 0 && middlePixel[1] == 0 && middlePixel[0] == 255) {
 				cout << "black square \n";
-			} else if (middlePixel[0] == 0 && middlePixel[1] == 255 && middlePixel[2] == 255) {
+			} else if (middlePixel[2] == 0 && middlePixel[1] == 255 && middlePixel[0] == 255) {
 				cout << "white square \n";
 			}
-
-			/*
-			Mat hsv_image;
-
-			cvtColor(end, hsv_image, COLOR_BGR2HSV);
-
-			split(hsv_image, hsv_planes);
-
-			// make histogram with color element ('h' in hsv means 'hue')
-			int hHistSize = 180;
-			float hRange[] = { 0, 180 }, vRange[] = { 0, 100 };
-			const float* hHistRange = { hRange };
-
-			Mat  h_hist;
-
-			calcHist(&hsv_planes[0], 1, 0, Mat(), h_hist, 1, &hHistSize, &hHistRange, true, false);
-
-			imshow("histogram", h_hist);
-
-			int hHist_w = 360; int hHist_h = 400;
-			int hbin_w = round((double)hHist_w / hHistSize);
-
-			Mat hHistImage(hHist_h, hHist_w, CV_8UC3, Scalar(0, 0, 0));
-			normalize(h_hist, h_hist, 0, h_hist.rows, NORM_MINMAX, -1, Mat());
-			int highestY = 0;
-			int highestX = 0;
-
-			for (int i = 1; i < hHistSize; i++)
-			{
-				line(hHistImage, Point(hbin_w * (i - 1), hHist_h - cvRound(h_hist.at<float>(i - 1))), Point(hbin_w * (i), hHist_h - cvRound(h_hist.at<float>(i))), Scalar(255, 0, 0), 2, 8, 0);
-
-				if (hHist_h - cvRound(h_hist.at<float>(i)) > highestY) {
-					highestX = hbin_w * (i);
-					highestY = hHist_h - cvRound(h_hist.at<float>(i));
-				}
-			}
-
-			imshow("calcHist Demo", hHistImage);
-
-			cout << "most used color is " << highestX << endl;*/
 			
 		}
 
-	}
+	}*/
 
 }
 
 void partThree(VideoCapture video) {
 
+	/*
+	calcOpticalFlowFarneback(previous_gray_frame, gray_frame, optical_flow, 0.5, 3, 15, 3, 5, 1.2, 0);
+	cvtColor(previous_gray_frame, display, CV_GRAY2BGR); 
+	
+	for (int row = 4; row < display.rows; row += 8)
+		for (int column = 4; column < display.cols; column + 8)
+		{
+			Point2f& flow = optical_flow.at<Point2f>(row, column); line(display, Point(column, row), Point(
+				cvRound(column + flow.x), cvRound(row + flow.y)),
+				passed_colour);
+		}
+	gmm.getBackgroundImage(mean_background_image);*/
 
 }
 
 
 void partFour (Mat& static_img) {
+
 
 	// Hough Lines
 	Mat canny_edge_image;
@@ -411,11 +546,12 @@ void partFour (Mat& static_img) {
 	}
 
 
-	// find chessboard
-	Size patternsize(8, 6);
+	// find chessboard you need to invert the image as it requrires a white background
+	Size patternsize(8, 8);
 	Mat output;
 	Mat input = static_img.clone();
-
+	//cvtColor(static_img, input, COLOR_RGB2GRAY);
+	
 
 	vector<Point2f> corners; //this will be filled by the detected corners
 
@@ -428,7 +564,7 @@ void partFour (Mat& static_img) {
 	//findChessboardCorners(static_img, patternsize, output, CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE +CALIB_CB_FAST_CHECK);
 	imshow("findChessboard", input);
 
-
+	cout << "The corners: " << corners << "\n";
 }
 
 
