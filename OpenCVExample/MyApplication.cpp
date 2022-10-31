@@ -275,25 +275,22 @@ Mat findPieces (Mat& static_background_image) {
 
 	Mat thresh;
 	
-	adaptiveThreshold(black_pieces, thresh, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 15, -5);
-
+	//adaptiveThreshold(black_pieces, thresh, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 15, -5);
+	threshold(black_pieces, thresh, 30, 255, THRESH_BINARY | THRESH_OTSU);
 	Mat closed_image;
 	Mat five_by_five_element(5, 5, CV_8U, Scalar(1));
-	morphologyEx(thresh, closed_image, 
-		MORPH_CLOSE, five_by_five_element);
-	dilate(closed_image, closed_image, Mat());
+
+	dilate(thresh, closed_image, Mat());
 
 	current_image.setTo(Scalar(255, 255, 255), closed_image);
 
+	threshold(white_pieces, thresh, 30, 255, THRESH_BINARY | THRESH_OTSU);
 
-	adaptiveThreshold(white_pieces, thresh, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 15, -5);
-	morphologyEx(thresh, closed_image,
-		MORPH_CLOSE, five_by_five_element);
-	dilate(closed_image, closed_image, Mat());
+	dilate(thresh, closed_image, Mat());
 
 	current_image.setTo(Scalar(0, 0, 0), closed_image);
 
-	adaptiveThreshold(black_squares, thresh, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 15, -5);
+	//adaptiveThreshold(black_squares, thresh, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 15, -5);
 
 	current_image.setTo(Scalar(0, 0, 255), black_squares);
 
@@ -421,20 +418,23 @@ int piece(Mat& img) {
 
 			Vec3b colours = img.at<Vec3b>(i, j);
 			
-			if ((colours[0] == 0 && colours[1] == 0 && colours[2] == 0)) {
+			if ((colours[0] == 255 && colours[1] == 255 && colours[2] == 255)) {
 				black_pixels++;
-			} else if (colours[0] == 255 && colours[1] == 255 && colours[2] == 255) {
+			} else if (colours[0] == 0 && colours[1] == 0 && colours[2] == 0) {
 				white_pixels++;
 			}
-			else if (colours[0] == 0 && colours[1] == 0 && colours[2] == 255) {
+			else //if (colours[0] == 0 && colours[1] == 0 && colours[2] == 255)
+			{
 				empty_piece++;
 			}
 		}
 	}
 
 	//cout << "black : " << black_pixels << " white_pixels: " << white_pixels << " empty: " << empty_piece << "\n";
-
-	if (black_pixels > white_pixels && black_pixels > 200) {
+	if (empty_piece > 1700) {
+		return EMPTY_SQUARE;
+	}
+	else if (black_pixels > white_pixels && black_pixels > 200) {
 		return BLACK_MAN_ON_SQUARE;
 	}
 	else if (white_pixels > black_pixels && white_pixels > 200) {
@@ -449,6 +449,8 @@ int piece(Mat& img) {
 
 string black = "";
 string white = "";
+
+int pieces [32];
 
 void partTwo(Mat& current_img, int current) {
 
@@ -484,6 +486,7 @@ void partTwo(Mat& current_img, int current) {
 				int piece_no = piece(end);
 				if (piece_no == BLACK_MAN_ON_SQUARE) {
 					black += std::to_string(index )+ ",";
+					pieces[index] = BLACK_MAN_ON_SQUARE;
 					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE || current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
 						confusionMatrix[2][2]++;
 					}
@@ -495,7 +498,7 @@ void partTwo(Mat& current_img, int current) {
 					}
 				} else if (piece_no == WHITE_MAN_ON_SQUARE) {
 					white += std::to_string(index) + ",";
-
+					pieces[index] = WHITE_MAN_ON_SQUARE;
 					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE || current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
 						confusionMatrix[1][2]++;
 					}
@@ -507,6 +510,7 @@ void partTwo(Mat& current_img, int current) {
 					}
 				}
 				else if (piece_no  == EMPTY_SQUARE) {
+					pieces[index] = EMPTY_SQUARE;
 					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE || current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
 						confusionMatrix[0][2]++;
 					}
@@ -527,28 +531,47 @@ void partTwo(Mat& current_img, int current) {
 	}
 }
 
-void partThree(VideoCapture video) {
+// Part Three
+void partThree(VideoCapture& video) {
 
-	// median blur
-	// check frame has no hand
-	// if one piece moves
-	//medianBlur(video, blurred, 3);
-	/*
-	calcOpticalFlowFarneback(previous_gray_frame, gray_frame, optical_flow, 0.5, 3, 15, 3, 5, 1.2, 0);
-	cvtColor(previous_gray_frame, display, CV_GRAY2BGR); 
-	
-	for (int row = 4; row < display.rows; row += 8)
-		for (int column = 4; column < display.cols; column + 8)
-		{
-			Point2f& flow = optical_flow.at<Point2f>(row, column); line(display, Point(column, row), Point(
-				cvRound(column + flow.x), cvRound(row + flow.y)),
-				passed_colour);
+	Mat current_frame;
+	video >> (current_frame);
+	int number_of_frames= 0;
+	int index = 1;
+	Mat difference;
+	Mat moving_points;
+	int count_of_stills = 0;
+	static cv::Mat last_still_frame = current_frame.clone();
+	video >> (current_frame);
+
+	while (!current_frame.empty())
+	{
+		absdiff(current_frame, last_still_frame, difference);
+		cvtColor(difference, difference, COLOR_RGB2GRAY);
+		threshold(difference, difference, 35, 255, THRESH_BINARY);
+		double percentage = (countNonZero(difference) * 100 )/ difference.total() ;
+		
+		//cout << "Current Frame percent: " << percentage << "\n"; 
+		
+		if (percentage == 0.0) {
+			
+			if (count_of_stills > 5) {
+				cout << "Current Frame: " << index << "\n";
+				count_of_stills = 0;
+				number_of_frames++;
+			}
+			count_of_stills++;
 		}
-	gmm.getBackgroundImage(mean_background_image);*/
+		last_still_frame = current_frame.clone();
+		video >> current_frame;
+		index++;
+	}
+	
+	cout << "Number of frames: " << number_of_frames << "\n";
 
 }
 
-
+// Part Four
 void partFour (Mat& static_img) {
 
 
@@ -607,8 +630,207 @@ void partFour (Mat& static_img) {
 	cout << "The corners: " << corners << "\n";
 }
 
+/// Extended confusion matrix for part Five
+/// Predicted		Ground Truth
+///				Empty	White	Black   White King   Black King
+/// Empty
+/// White
+/// Black
+/// White King
+/// Black King
+int extendedConfusionMatrix [5][5] =
+{
+	{0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0}
+};
 
-void partFive () {
+int piece_type(Mat& img) {
+
+	Vec3b colours;
+	int black_pixels = 0;
+	int white_pixels = 0;
+	int empty_piece = 0;
+
+	for (int j = 0; j < (img.cols); j += 1) {
+
+		for (int i = 0; i < (img.rows); i += 1) {
+
+			Vec3b colours = img.at<Vec3b>(i, j);
+
+			if ((colours[0] == 255 && colours[1] == 255 && colours[2] == 255)) {
+				black_pixels++;
+			}
+			else if (colours[0] == 0 && colours[1] == 0 && colours[2] == 0) {
+				white_pixels++;
+			}
+			else //if (colours[0] == 0 && colours[1] == 0 && colours[2] == 255)
+			{
+				empty_piece++;
+			}
+		}
+	}
+
+	//cout << "black : " << black_pixels << " white_pixels: " << white_pixels << " empty: " << empty_piece << "\n";
+	if (empty_piece > 1700) {
+		return EMPTY_SQUARE;
+	}
+	else if (black_pixels > white_pixels && black_pixels > 200) {
+		return BLACK_MAN_ON_SQUARE;
+	}
+	else if (white_pixels > black_pixels && white_pixels > 200) {
+		return WHITE_MAN_ON_SQUARE;
+	}
+	else if (black_pixels > white_pixels && black_pixels > 350) {
+		return BLACK_KING_ON_SQUARE;
+	}
+	else if (white_pixels > black_pixels && white_pixels > 350) {
+		return WHITE_KING_ON_SQUARE;
+	}
+	else {
+		return EMPTY_SQUARE;
+	}
+
+
+}
+
+// Part Five - Average threshold
+void partFive (Mat& current_img, int current) {
+	// Set an average threshold for pixels that are pieces
+
+	DraughtsBoard current_board(GROUND_TRUTH_FOR_BOARD_IMAGES[current][0], GROUND_TRUTH_FOR_BOARD_IMAGES[current][1], GROUND_TRUTH_FOR_BOARD_IMAGES[current][2]);
+
+	Point2f source[4] = { { 114.0, 17.0 }, { 53.0, 245.0 }, { 355.0, 20.0 }, { 433.0, 241.0 } };
+	Point2f destination[4] = { {0.0, 0.0}, {Point2f(0.0, current_img.rows)}, {Point2f(current_img.cols,0.0)},  {Point2f(current_img.cols, current_img.rows)} };
+
+	Mat result;
+	Mat perspective_matrix = getPerspectiveTransform(source, destination);
+
+	warpPerspective(current_img, result, perspective_matrix, result.size());
+	imshow("Perspective change", result);
+
+	Mat end;
+
+	int indexRow = result.rows / NUMBER_OF_SQUARES_ON_EACH_SIDE;
+	int indexCol = result.cols / NUMBER_OF_SQUARES_ON_EACH_SIDE;
+
+	end = result(Rect(indexCol, 0, indexCol, indexRow));
+	piece(end);
+
+	int rowNum = 0;
+	int colNum = 0;
+	int index = 1;
+	for (int j = 0; j < (result.cols); j += (indexCol)) {
+
+		for (int i = 0; i < (result.rows - indexRow); i += (indexRow)) {
+
+			end = result(Rect(j, i, indexCol, indexRow));
+
+			if (isBlackSquare(colNum, rowNum) == true) {
+				int piece_no = piece(end);
+				if (piece_no == BLACK_MAN_ON_SQUARE) {
+					black += std::to_string(index) + ",";
+					pieces[index] = BLACK_MAN_ON_SQUARE;
+					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
+						extendedConfusionMatrix[2][2]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == EMPTY_SQUARE) {
+						extendedConfusionMatrix[2][0]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == WHITE_MAN_ON_SQUARE) {
+						extendedConfusionMatrix[2][1]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == WHITE_KING_ON_SQUARE) {
+						extendedConfusionMatrix[2][3]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
+						extendedConfusionMatrix[2][4]++;
+					}
+				}
+				else if (piece_no == WHITE_MAN_ON_SQUARE) {
+					white += std::to_string(index) + ",";
+					pieces[index] = WHITE_MAN_ON_SQUARE;
+					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
+						extendedConfusionMatrix[1][2]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == EMPTY_SQUARE) {
+						extendedConfusionMatrix[1][0]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == WHITE_MAN_ON_SQUARE) {
+						extendedConfusionMatrix[1][1]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == WHITE_KING_ON_SQUARE) {
+						extendedConfusionMatrix[1][3]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
+						extendedConfusionMatrix[1][4]++;
+					}
+				}
+				else if (piece_no == EMPTY_SQUARE) {
+					pieces[index] = EMPTY_SQUARE;
+					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
+						extendedConfusionMatrix[0][2]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == EMPTY_SQUARE) {
+						extendedConfusionMatrix[0][0]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == WHITE_MAN_ON_SQUARE) {
+						extendedConfusionMatrix[0][1]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == WHITE_KING_ON_SQUARE) {
+						extendedConfusionMatrix[0][3]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
+						extendedConfusionMatrix[0][4]++;
+					}
+				}
+				else if (piece_no == WHITE_KING_ON_SQUARE) {
+					pieces[index] = WHITE_KING_ON_SQUARE;
+					white += "k" + std::to_string(index) + ",";
+					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
+						extendedConfusionMatrix[3][2]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == EMPTY_SQUARE) {
+						extendedConfusionMatrix[3][0]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == WHITE_MAN_ON_SQUARE) {
+						extendedConfusionMatrix[3][1]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == WHITE_KING_ON_SQUARE) {
+						extendedConfusionMatrix[3][3]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
+						extendedConfusionMatrix[3][4]++;
+					}
+				}
+				else if (piece_no == BLACK_KING_ON_SQUARE) {
+					pieces[index] = BLACK_KING_ON_SQUARE;
+					black += "k" + std::to_string(index) + ",";
+					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
+						extendedConfusionMatrix[4][2]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == EMPTY_SQUARE) {
+						extendedConfusionMatrix[4][0]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == WHITE_MAN_ON_SQUARE) {
+						extendedConfusionMatrix[4][1]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == WHITE_KING_ON_SQUARE) {
+						extendedConfusionMatrix[4][3]++;
+					}
+					else if (current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
+						extendedConfusionMatrix[4][4]++;
+					}
+				}
+				index++;
+			}
+			rowNum++;
+		}
+		rowNum = 0;
+		colNum++;
+	}
 
 }
 
@@ -642,20 +864,52 @@ void MyApplication()
 	cout << "Empty       " << confusionMatrix[0][0] << "       " << confusionMatrix[0][1] << "        " << confusionMatrix[0][2] << "\n";
 	cout << "White       " << confusionMatrix[1][0] << "       " << confusionMatrix[1][1] << "         " << confusionMatrix[1][2] << "\n";
 	cout << "Black       " << confusionMatrix[2][0] << "       " << confusionMatrix[2][1] << "        " << confusionMatrix[2][2] << "\n";
-	
+
+
 	// Part Three - Video
 	string video_filename("Media/DraughtsGame1.avi");
 	VideoCapture video;
 	video.open(video_filename);
-	partThree(video);
+	//partThree(video);
 	
-
 	// Part Four - Finding Corners
 	string background_file("Media/DraughtsGame1.jpg");
 	Mat static_background_img = imread(background_file, -1);
-	partFour(static_background_img);
+	//partFour(static_background_img);
 
-	partFive();
+	//string current_file("Media/" + GROUND_TRUTH_FOR_BOARD_IMAGES[68][0]);
+	//Mat file = imread(current_file, -1);
+	//Mat pt1 = findPieces(file);
+	//partFive(pt1, 62);
+	
+	// Part Five
+	for (int i = 0; i < 69; i++) {
+		black = "";
+		white = "";
+		string background_filename("Media/" + GROUND_TRUTH_FOR_BOARD_IMAGES[i][0]);
+		Mat static_background_image = imread(background_filename, -1);
+
+		if (static_background_image.empty())
+			cout << "Cannot open image file: " << background_filename << endl;
+		else {
+			Mat pt1 = findPieces(static_background_image);
+
+			partFive(pt1, i);
+			cout << i << " white: " << white << "\n";
+			cout << i << " black: " << black << "\n";
+		}
+
+	}
+	
+	// Printing the confusion Matrix
+	cout << "Confusion Matrix \n";
+	cout << "Predicted        Ground Truth\n";
+	cout << "            Empty     White     Black    White King    Black King" << "\n";
+	cout << "Empty       " << extendedConfusionMatrix[0][0] << "       " << extendedConfusionMatrix[0][1] << "        " << extendedConfusionMatrix[0][2] << "        " << extendedConfusionMatrix[0][3] << "        " << extendedConfusionMatrix[0][4] << "\n";
+	cout << "White       " << extendedConfusionMatrix[1][0] << "       " << extendedConfusionMatrix[1][1] << "         " << extendedConfusionMatrix[1][2] << "        " << extendedConfusionMatrix[1][3] << "        " << extendedConfusionMatrix[1][4] << "\n";
+	cout << "Black       " << extendedConfusionMatrix[2][0] << "       " << extendedConfusionMatrix[2][1] << "        " << extendedConfusionMatrix[2][2] << "        " << extendedConfusionMatrix[2][3] << "        " << extendedConfusionMatrix[2][4] << "\n";
+	cout << "White King  " << extendedConfusionMatrix[3][0] << "       " << extendedConfusionMatrix[3][1] << "        " << extendedConfusionMatrix[3][2] << "        " << extendedConfusionMatrix[3][3] << "        " << extendedConfusionMatrix[3][4] << "\n";
+	cout << "Black King  " << extendedConfusionMatrix[4][0] << "       " << extendedConfusionMatrix[4][1] << "        " << extendedConfusionMatrix[4][2] << "        " << extendedConfusionMatrix[4][3] << "        " << extendedConfusionMatrix[4][4] << "\n";
 
 	int pieces[32];
 	string black_pieces_filename("Media/DraughtsGame1BlackPieces.jpg");
