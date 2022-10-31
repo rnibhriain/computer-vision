@@ -536,10 +536,6 @@ void partTwo(Mat& current_img, int current) {
 // Part Three
 void partThree(VideoCapture& video) {
 
-	Ptr<BackgroundSubtractorMOG2> gmm = createBackgroundSubtractorMOG2();
-
-	
-
 	Mat current_frame;
 	video >> (current_frame);
 	int number_of_frames= 0;
