@@ -238,7 +238,7 @@ void DraughtsBoard::loadGroundTruth(string pieces, int man_type, int king_type)
 
 
 // Part One 
-Mat findPieces (Mat& static_background_image) {
+Mat partOne (Mat& static_background_image) {
 
 	Mat current_image = static_background_image;
 
@@ -533,13 +533,62 @@ void partTwo(Mat& current_img, int current) {
 	}
 }
 
+int lastMove[33] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+bool checkMoves() {
+	bool move = false;
+	for (int i = 0; i < 32; i++) {
+		if (lastMove[i] != pieces[i]) {
+			cout << lastMove[i] << "-" << pieces[i] << "\n";
+			move = true;
+		}
+	}
+	if (move) {
+		return true;
+	}
+	else {
+		return false;
+	}
+	
+}
+
 // Part Three
 void partThree(VideoCapture& video) {
 
 	Ptr<BackgroundSubtractorMOG2> gmm = createBackgroundSubtractorMOG2();
 
-	
+	Mat current_frame;
+	video >> (current_frame);
+	Mat last_still_frame = current_frame.clone();
+	video >> (current_frame);
+	int number_of_frames = 0;
+	int count_of_stills = 0;
 
+	while (!current_frame.empty())
+	{
+
+		last_still_frame = current_frame.clone();
+		gmm->apply(current_frame, last_still_frame);
+		Mat moving_points;
+		threshold(last_still_frame, moving_points, 150, 255, THRESH_BINARY);
+		Mat diff;
+		absdiff(last_still_frame, moving_points, diff);
+		threshold(last_still_frame, moving_points, 25, 255, THRESH_BINARY);
+		double percentage = (countNonZero(diff) * 100) / diff.total();
+
+		if (count_of_stills > 5) {
+			cout << "Current Frame: " << number_of_frames << "\n";
+			count_of_stills = 0;
+			number_of_frames++;
+			partOne(current_frame);
+		}
+		count_of_stills++;
+		
+		video >> (current_frame);
+		number_of_frames++;
+	}
+
+	/*
 	Mat current_frame;
 	video >> (current_frame);
 	int number_of_frames= 0;
@@ -575,7 +624,7 @@ void partThree(VideoCapture& video) {
 		index++;
 	}
 	
-	cout << "Number of frames: " << number_of_frames << "\n";
+	cout << "Number of frames: " << number_of_frames << "\n";*/
 
 }
 
@@ -607,10 +656,10 @@ void partFour (Mat& static_img) {
 
 
 	// find chessboard you need to invert the image as it requrires a white background
-	Size patternsize(8, 8);
+	Size patternsize(7, 7);
 	Mat output;
 	Mat input = static_img.clone();
-	//cvtColor(static_img, input, COLOR_RGB2GRAY);
+	cvtColor(static_img, input, COLOR_RGB2GRAY);
 	
 
 	vector<Point2f> corners; //this will be filled by the detected corners
@@ -682,13 +731,13 @@ int piece_type(Mat& img) {
 	}
 
 	//cout << "black : " << black_pixels << " white_pixels: " << white_pixels << " empty: " << empty_piece << "\n";
-	if (empty_piece > 1500) {
+	if (empty_piece > 1400) {
 		return EMPTY_SQUARE;
 	}
-	else if (black_pixels > white_pixels && black_pixels > 250) {
+	else if (black_pixels > white_pixels && black_pixels > 500) {
 		return BLACK_KING_ON_SQUARE;
 	}
-	else if (white_pixels > black_pixels && white_pixels > 250) {
+	else if (white_pixels > black_pixels && white_pixels > 500) {
 		return WHITE_KING_ON_SQUARE;
 	}
 	else if (black_pixels > white_pixels && black_pixels > 200) {
@@ -725,7 +774,6 @@ void partFive (Mat& current_img, int current) {
 	int indexCol = result.cols / NUMBER_OF_SQUARES_ON_EACH_SIDE;
 
 	end = result(Rect(indexCol, 0, indexCol, indexRow));
-	piece(end);
 
 	int rowNum = 0;
 	int colNum = 0;
@@ -737,7 +785,7 @@ void partFive (Mat& current_img, int current) {
 			end = result(Rect(j, i, indexCol, indexRow));
 
 			if (isBlackSquare(colNum, rowNum) == true) {
-				int piece_no = piece(end);
+				int piece_no = piece_type(end);
 				if (piece_no == BLACK_MAN_ON_SQUARE) {
 					black += std::to_string(index) + ",";
 					pieces[index] = BLACK_MAN_ON_SQUARE;
@@ -847,7 +895,7 @@ void MyApplication()
 {
 	
 	// Part One + Part Two
-	for (int i = 0; i < 69; i++) {
+	for (int i = 0; i < sizeof(GROUND_TRUTH_FOR_BOARD_IMAGES)/sizeof(GROUND_TRUTH_FOR_BOARD_IMAGES[0]); i++) {
 		black = "";
 		white = "";
 		string background_filename("Media/" + GROUND_TRUTH_FOR_BOARD_IMAGES[i][0]);
@@ -856,7 +904,7 @@ void MyApplication()
 		if (static_background_image.empty())
 			cout << "Cannot open image file: " << background_filename << endl;
 		else {
-			Mat pt1 = findPieces(static_background_image);
+			Mat pt1 = partOne(static_background_image);
 
 			partTwo(pt1, i);
 			cout << i << " white: " << white << "\n";
@@ -883,7 +931,7 @@ void MyApplication()
 	// Part Four - Finding Corners
 	string background_file("Media/DraughtsGame1.jpg");
 	Mat static_background_img = imread(background_file, -1);
-	//partFour(static_background_img);
+	partFour(static_background_img);
 
 	//string current_file("Media/" + GROUND_TRUTH_FOR_BOARD_IMAGES[68][0]);
 	//Mat file = imread(current_file, -1);
@@ -900,7 +948,7 @@ void MyApplication()
 		if (static_background_image.empty())
 			cout << "Cannot open image file: " << background_filename << endl;
 		else {
-			Mat pt1 = findPieces(static_background_image);
+			Mat pt1 = partOne(static_background_image);
 
 			partFive(pt1, i);
 			cout << i << " white: " << white << "\n";
