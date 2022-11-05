@@ -433,13 +433,13 @@ int piece(Mat& img) {
 	}
 
 	//cout << "black : " << black_pixels << " white_pixels: " << white_pixels << " empty: " << empty_piece << "\n";
-	if (empty_piece > 1700) {
+	if (empty_piece > 1550) {
 		return EMPTY_SQUARE;
 	}
-	else if (black_pixels > white_pixels && black_pixels > 200) {
+	else if (black_pixels > white_pixels && black_pixels > 50) {
 		return BLACK_MAN_ON_SQUARE;
 	}
-	else if (white_pixels > black_pixels && white_pixels > 200) {
+	else if (white_pixels > black_pixels && white_pixels > 50) {
 		return WHITE_MAN_ON_SQUARE;
 	}
 	else {
@@ -477,7 +477,7 @@ void partTwo(Mat& current_img, int current) {
 
 	int rowNum = 0;
 	int colNum = 0;
-	int index = 1;
+	int index = 0;
 	for (int j = 0; j < (result.cols); j += (indexCol)) {
 
 		for (int i = 0; i < (result.rows - indexRow); i += (indexRow)) {
@@ -487,7 +487,7 @@ void partTwo(Mat& current_img, int current) {
 			if (isBlackSquare( colNum, rowNum) == true) {
 				int piece_no = piece(end);
 				if (piece_no == BLACK_MAN_ON_SQUARE) {
-					black += std::to_string(index )+ ",";
+					black += std::to_string(index +1)+ ",";
 					pieces[index] = BLACK_MAN_ON_SQUARE;
 					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE || current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
 						confusionMatrix[2][2]++;
@@ -499,7 +499,7 @@ void partTwo(Mat& current_img, int current) {
 						confusionMatrix[2][1]++;
 					}
 				} else if (piece_no == WHITE_MAN_ON_SQUARE) {
-					white += std::to_string(index) + ",";
+					white += std::to_string(index+1) + ",";
 					pieces[index] = WHITE_MAN_ON_SQUARE;
 					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE || current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
 						confusionMatrix[1][2]++;
@@ -533,17 +533,28 @@ void partTwo(Mat& current_img, int current) {
 	}
 }
 
-int lastMove[33] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int lastMove[32] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 bool checkMoves() {
 	bool move = false;
+	int newEmpty = 0;
+	int newMove = 0;
 	for (int i = 0; i < 32; i++) {
 		if (lastMove[i] != pieces[i]) {
-			cout << lastMove[i] << "-" << pieces[i] << "\n";
+			if (pieces[i] == EMPTY_SQUARE) {
+				newEmpty = i+1;
+			}
+			else if (lastMove[i] == EMPTY_SQUARE) {
+				newMove = i+1;
+			}
+			
 			move = true;
 		}
 	}
-	if (move) {
+	
+	if (move && newEmpty != 0 && newMove != 0) {
+		cout << newEmpty << ", " << newMove << "\n";
+		std::copy(pieces, pieces + 32, lastMove);
 		return true;
 	}
 	else {
@@ -556,17 +567,17 @@ bool checkMoves() {
 void partThree(VideoCapture& video) {
 
 	Ptr<BackgroundSubtractorMOG2> gmm = createBackgroundSubtractorMOG2();
-
+	
 	Mat current_frame;
 	video >> (current_frame);
 	Mat last_still_frame = current_frame.clone();
 	video >> (current_frame);
 	int number_of_frames = 0;
 	int count_of_stills = 0;
+	int stills = 0;
 
 	while (!current_frame.empty())
 	{
-
 		last_still_frame = current_frame.clone();
 		gmm->apply(current_frame, last_still_frame);
 		Mat moving_points;
@@ -576,17 +587,28 @@ void partThree(VideoCapture& video) {
 		threshold(last_still_frame, moving_points, 25, 255, THRESH_BINARY);
 		double percentage = (countNonZero(diff) * 100) / diff.total();
 
-		if (count_of_stills > 5) {
-			cout << "Current Frame: " << number_of_frames << "\n";
-			count_of_stills = 0;
-			number_of_frames++;
-			partOne(current_frame);
+		if (percentage == 0) {
+			if (count_of_stills > 5) {
+				count_of_stills = 0;
+
+				Mat ptOne = partOne(current_frame);
+				partTwo(ptOne, 0);
+				bool isMove = checkMoves();
+				if (isMove) {
+					stills++;
+					cout << "Current Frame: " << number_of_frames << "\n";
+				}
+			}
+			count_of_stills++;
 		}
-		count_of_stills++;
+
+		
 		
 		video >> (current_frame);
 		number_of_frames++;
 	}
+
+	cout << "Number of frames: " << stills << "\n";
 
 	/*
 	Mat current_frame;
