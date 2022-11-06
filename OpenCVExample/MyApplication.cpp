@@ -94,75 +94,75 @@ const string GROUND_TRUTH_FOR_BOARD_IMAGES[][3] = {
 // This data corresponds to the video:  DraughtsGame1.avi
 // Note that this information can ONLY be used to evaluate performance.  It must not be used during processing of the video.
 const int GROUND_TRUTH_FOR_DRAUGHTSGAME1_VIDEO_MOVES[][3] = {
-{ 17, 9, 13 },
-{ 37, 24, 20 },
-{ 50, 6, 9 },
-{ 65, 22, 17 },
-{ 85, 13, 22 },
-{ 108, 26, 17 },
-{ 123, 9, 13 },
-{ 161, 30, 26 },
-{ 180, 13, 22 },
-{ 201, 25, 18 },
-{ 226, 12, 16 },
-{ 244, 18, 14 },
-{ 266, 10, 17 },
-{ 285, 21, 14 },
-{ 308, 2, 6 },
-{ 326, 26, 22 },
-{ 343, 6, 9 },
-{ 362, 22, 18 },
-{ 393, 11, 15 },
-{ 433, 18, 2 },
-{ 453, 9, 18 },
-{ 472, 23, 14 },
-{ 506, 3, 7 },
-{ 530, 20, 11 },
-{ 546, 7, 16 },
-{ 582, 2, 7 },
-{ 617, 8, 11 },
-{ 641, 27, 24 },
-{ 673, 1, 6 },
-{ 697, 7, 2 },
-{ 714, 6, 9 },
-{ 728, 14, 10 },
-{ 748, 9, 14 },
-{ 767, 10, 7 },
-{ 781, 14, 17 },
-{ 801, 7, 3 },
-{ 814, 11, 15 },
-{ 859, 24, 20 },
-{ 870, 16, 19 },
-{ 891, 3, 7 },
-{ 923, 15, 18 },
-{ 936, 7, 10 },
-{ 955, 18, 22 },
-{ 995, 10, 14 },
-{ 1014, 17, 21 },
-{ 1034, 14, 17 },
-{ 1058, 21, 25 },
-{ 1075, 17, 26 },
-{ 1104, 25, 30 },
-{ 1129, 31, 27 },
-{ 1147, 30, 23 },
-{ 1166, 27, 18 },
-{ 1182, 19, 23 },
-{ 1201, 18, 15 },
-{ 1213, 23, 26 },
-{ 1243, 15, 11 },
-{ 1266, 26, 31 },
-{ 1280, 32, 27 },
-{ 1298, 31, 24 },
-{ 1324, 28, 19 },
-{ 1337, 5, 9 },
-{ 1358, 29, 25 },
-{ 1387, 9, 14 },
-{ 1450, 25, 22 },
-{ 1465, 14, 18 },
-{ 1490, 22, 15 },
-{1490, 4, 8},
-{1490, 11, 4}
-};
+	{17, 9, 13},
+	{37, 24, 20},
+	{50, 6, 9},
+	{65, 22, 17},
+	{85, 13, 22},
+	{108, 26, 17},
+	{123, 9, 13},
+	{161, 30, 26},
+	{180, 13, 22},
+	{201, 25, 18},
+	{226, 12, 16},
+	{244, 18, 14},
+	{266, 10, 17},
+	{285, 21, 14},
+	{308, 2, 6},
+	{326, 26, 22},
+	{343, 6, 9},
+	{362, 22, 18},
+	{393, 11, 15},
+	{433, 18, 2},
+	{453, 9, 18},
+	{472, 23, 14},
+	{506, 3, 7},
+	{530, 20, 11},
+	{546, 7, 16},
+	{582, 2, 7},
+	{617, 8, 11},
+	{641, 27, 24},
+	{673, 1, 6},
+	{697, 7, 2},
+	{714, 6, 9},
+	{728, 14, 10},
+	{748, 9, 14},
+	{767, 10, 7},
+	{781, 14, 17},
+	{801, 7, 3},
+	{814, 11, 15},
+	{859, 24, 20},
+	{870, 16, 19},
+	{891, 3, 7},
+	{923, 15, 18},
+	{936, 7, 10},
+	{955, 18, 22},
+	{995, 10, 14},
+	{1014, 17, 21},
+	{1034, 14, 17},
+	{1058, 21, 25},
+	{1075, 17, 26},
+	{1104, 25, 30},
+	{1129, 31, 27},
+	{1147, 30, 23},
+	{1166, 27, 18},
+	{1182, 19, 23},
+	{1201, 18, 15},
+	{1213, 23, 26},
+	{1243, 15, 11},
+	{1266, 26, 31},
+	{1280, 32, 27},
+	{1298, 31, 24},
+	{1324, 28, 19},
+	{1337, 5, 9},
+	{1358, 29, 25},
+	{1387, 9, 14},
+	{1450, 25, 22},
+	{-1, 14, 18},
+	{-1, 22, 15},
+	{1465, 4, 8},
+	{1490, 11, 4} };
+
 
 
 /// confusion matrix for part two
@@ -292,9 +292,11 @@ Mat partOne (Mat& static_background_image) {
 
 	current_image.setTo(Scalar(0, 0, 0), closed_image);
 
-	//adaptiveThreshold(black_squares, thresh, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 15, -5);
+	//threshold(black_squares, thresh, 0, 255, THRESH_BINARY | THRESH_OTSU);
 
 	current_image.setTo(Scalar(0, 0, 255), black_squares);
+
+	//threshold(white_squares, thresh, 0, 255, THRESH_BINARY | THRESH_OTSU);
 
 	current_image.setTo(Scalar(0, 255, 255), white_squares);
 
@@ -433,7 +435,7 @@ int piece(Mat& img) {
 	}
 
 	//cout << "black : " << black_pixels << " white_pixels: " << white_pixels << " empty: " << empty_piece << "\n";
-	if (empty_piece > 1550) {
+	if (empty_piece > 1898) {
 		return EMPTY_SQUARE;
 	}
 	else if (black_pixels > white_pixels && black_pixels > 50) {
@@ -484,7 +486,7 @@ void partTwo(Mat& current_img, int current) {
 
 			end = result(Rect(j, i, indexCol, indexRow));
 
-			if (isBlackSquare( colNum, rowNum) == true) {
+			if (isBlackSquare( colNum, rowNum)) {
 				int piece_no = piece(end);
 				if (piece_no == BLACK_MAN_ON_SQUARE) {
 					black += std::to_string(index +1)+ ",";
@@ -533,18 +535,22 @@ void partTwo(Mat& current_img, int current) {
 	}
 }
 
+// Part Thee
 int lastMove[32] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+int newEmpty = 0;
+int newMove = 0;
 
 bool checkMoves() {
 	bool move = false;
-	int newEmpty = 0;
-	int newMove = 0;
+	newEmpty = 0;
+	newMove = 0;
 	for (int i = 0; i < 32; i++) {
 		if (lastMove[i] != pieces[i]) {
 			if (pieces[i] == EMPTY_SQUARE) {
 				newEmpty = i+1;
 			}
-			else if (lastMove[i] == EMPTY_SQUARE) {
+			if (lastMove[i] == EMPTY_SQUARE) {
 				newMove = i+1;
 			}
 			
@@ -552,7 +558,7 @@ bool checkMoves() {
 		}
 	}
 	
-	if (move && newEmpty != 0 && newMove != 0) {
+	if (move && (newMove != 0) && (newEmpty != 0)) {
 		cout << newEmpty << ", " << newMove << "\n";
 		std::copy(pieces, pieces + 32, lastMove);
 		return true;
@@ -568,146 +574,149 @@ void partThree(VideoCapture& video) {
 
 	Ptr<BackgroundSubtractorMOG2> gmm = createBackgroundSubtractorMOG2();
 	
-	Mat current_frame;
+	Mat current_frame, last_frame;
 	video >> (current_frame);
-	Mat last_still_frame = current_frame.clone();
-	video >> (current_frame);
+	Mat ptOne = partOne(current_frame);
+	partTwo(ptOne, 0);
+	std::copy(pieces, pieces + 32, lastMove);
+	bool firstFrame = true;
 	int number_of_frames = 0;
 	int count_of_stills = 0;
 	int stills = 0;
+	int trues = 0;
 
 	while (!current_frame.empty())
 	{
-		last_still_frame = current_frame.clone();
-		gmm->apply(current_frame, last_still_frame);
-		Mat moving_points;
-		threshold(last_still_frame, moving_points, 150, 255, THRESH_BINARY);
-		Mat diff;
-		absdiff(last_still_frame, moving_points, diff);
-		threshold(last_still_frame, moving_points, 25, 255, THRESH_BINARY);
-		double percentage = (countNonZero(diff) * 100) / diff.total();
+		last_frame = current_frame.clone();
+		video >> (current_frame);
+		if (!current_frame.empty()) {
+			gmm->apply(current_frame, last_frame);
+			Mat moving_points;
+			threshold(last_frame, moving_points, 150, 255, THRESH_BINARY);
+			Mat diff;
+			absdiff(last_frame, moving_points, diff);
+			threshold(last_frame, moving_points, 25, 255, THRESH_BINARY);
+			double percentage = (countNonZero(diff) * 100) / diff.total();
 
-		if (percentage == 0) {
-			if (count_of_stills > 5) {
+			if (percentage == 0) {
 				count_of_stills = 0;
-
-				Mat ptOne = partOne(current_frame);
+				ptOne = partOne(current_frame);
 				partTwo(ptOne, 0);
 				bool isMove = checkMoves();
 				if (isMove) {
-					stills++;
+						
 					cout << "Current Frame: " << number_of_frames << "\n";
+					if (GROUND_TRUTH_FOR_DRAUGHTSGAME1_VIDEO_MOVES[stills][1] == newEmpty && GROUND_TRUTH_FOR_DRAUGHTSGAME1_VIDEO_MOVES[stills][2] == newMove) {
+						cout << "true move " << stills<<" \n";
+					}
+					if (GROUND_TRUTH_FOR_DRAUGHTSGAME1_VIDEO_MOVES[stills][1] == newEmpty) {
+						trues++;
+					}
+					if (GROUND_TRUTH_FOR_DRAUGHTSGAME1_VIDEO_MOVES[stills][2] == newMove) {
+						trues++;
+					}
+					stills++;
 				}
 			}
-			count_of_stills++;
-		}
 
+
+			number_of_frames++;
+		}
 		
-		
-		video >> (current_frame);
-		number_of_frames++;
 	}
 
-	cout << "Number of frames: " << stills << "\n";
+	cout << "Number of frames: " << stills << " trues: " << trues << "\n";
 
-	/*
-	Mat current_frame;
-	video >> (current_frame);
-	int number_of_frames= 0;
-	int index = 1;
-	Mat difference;
-	Mat moving_points;
-	int count_of_stills = 0;
-	static cv::Mat last_still_frame = current_frame.clone();
-	video >> (current_frame);
-	Mat eval1;
-	Mat eval2;
-	while (!current_frame.empty())
-	{
-		cvtColor(current_frame, eval1, COLOR_BGR2GRAY);
-		cvtColor(last_still_frame, eval2, COLOR_BGR2GRAY);
-		absdiff(eval1, eval2, difference);
-		threshold(difference, difference, 35, 255, THRESH_BINARY);
-		double percentage = (countNonZero(difference) * 100 )/ difference.total() ;
-		
-		//cout << "Current Frame percent: " << percentage << "\n"; 
-		
-		if (percentage == 0.0) {
-			
-			if (count_of_stills > 5) {
-				cout << "Current Frame: " << index << "\n";
-				count_of_stills = 0;
-				number_of_frames++;
-			}
-			count_of_stills++;
-		}
-		last_still_frame = current_frame.clone();
-		video >> current_frame;
-		index++;
-	}
 	
-	cout << "Number of frames: " << number_of_frames << "\n";*/
 
 }
 
 // Part Four
 void partFour (Mat& static_img) {
 
+	Mat blurred;
+	medianBlur(static_img, blurred, 9);
+	medianBlur(blurred, blurred, 5);
+
+
+	Mat grayscale_board, binary_image;
+	imshow("Static Image", blurred);
+	cvtColor(blurred, grayscale_board, COLOR_BGR2GRAY, 0);
+	//Apply threshold to image
+	threshold(grayscale_board, binary_image, 255, 255, THRESH_BINARY | THRESH_OTSU);
+	imshow("Binary Image", binary_image);
 
 	// Hough Lines
 	Mat canny_edge_image;
-	Canny(static_img, canny_edge_image, 80, 150);
+	Canny(grayscale_board, canny_edge_image, 75, 150);
 	vector<Vec2f> hough_lines;
 	// raised the threshold
-	HoughLines(canny_edge_image, hough_lines, 1, PI / 200.0, 150);
+	HoughLines(canny_edge_image, hough_lines, 1, PI / 200.0, 80);
 	Mat hough_lines_image = static_img.clone();
 	DrawLines(hough_lines_image, hough_lines, Scalar(0, 255, 0));
 	imshow("hough", hough_lines_image);
 
-	// Use of contour following and straight line segment extraction.
-	vector<vector<Point>> contours;
+	Canny(static_img, binary_image, 255, 255 * 2);
+	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
+	findContours(binary_image, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
+	Mat drawing = Mat::zeros(binary_image.size(), CV_8UC3);
+	for (size_t i = 0; i < contours.size(); i++)
+	{
+		Scalar colour(rand() & 0xFF, rand() & 0xFF, rand() & 0xFF);
+		drawContours(drawing, contours, (int)i, colour, 2, LINE_8, hierarchy, 0);
+	}
+	imshow("Contours", drawing);
+
+	// Use of contour following and straight line segment extraction.
 	findContours(canny_edge_image, contours, hierarchy, RETR_TREE, CHAIN_APPROX_NONE);
 
-
-	for (int contour_number = 0;
-		(contour_number < contours.size()); contour_number++) {
-		Scalar colour(rand() & 0xFF, rand() & 0xFF, rand() & 0xFF); drawContours(static_img, contours, contour_number,
-			colour, 1, 8, hierarchy);
+	Mat clone = static_img.clone();
+	for (int contour_number = 0; (contour_number < contours.size()); contour_number++) {
+		Scalar colour(rand() & 0xFF, rand() & 0xFF, rand() & 0xFF); 
+		drawContours(clone, contours, contour_number,colour, 1, 8, hierarchy);
 	}
+	imshow("finish", clone);
 
 
-	// find chessboard you need to invert the image as it requrires a white background
-	Size patternsize(7, 7);
-	Mat output;
-	Mat input = static_img.clone();
-	cvtColor(static_img, input, COLOR_RGB2GRAY);
-	
+	//FindChessboardCorners()
+	vector<Point2f> corners;
 
-	vector<Point2f> corners; //this will be filled by the detected corners
+	Mat img_gray;
+	cvtColor(static_img, img_gray, COLOR_BGR2GRAY);
 
-   //CALIB_CB_FAST_CHECK saves a lot of time on images
-   //that do not contain any chessboard corners
-	bool patternfound = findChessboardCorners(input, patternsize, corners);
+	Size patternSize = Size(7, 7);
+	bool patternFound = false;
 
-	drawChessboardCorners(input, patternsize, Mat(corners), patternfound);
-	// findChessboardCorners
-	// 
-	bool found = findChessboardCorners(input, patternsize, output,
-		CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_FILTER_QUADS + CALIB_CB_NORMALIZE_IMAGE + CALIB_CB_FAST_CHECK);
-	if (found) {
+	patternFound = findChessboardCorners(img_gray, patternSize, corners, CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE);
+	cvtColor(img_gray, img_gray, COLOR_GRAY2BGR);
+	drawChessboardCorners(img_gray, patternSize, Mat(corners), patternFound);
+	imshow("findChessboard", img_gray);
+	if (findChessboardCorners) {
 		cout << "Chessboard found \n";
-	}
+		cout << "The corners: " << corners << "\n";
+
+		Mat current_img = img_gray.clone();
+		Point2f innerLeft = corners[0];
+		Point2f topRight = corners[6];
+		Point2f bottomLeft = corners[corners.size() - 8];
+		Point2f bottomRight = corners[corners.size() - 1];
+		Point2f source[4] = { innerLeft , topRight, bottomLeft , bottomRight };
+		Point2f destination[4] = { {0.0, 0.0}, {Point2f(0.0, current_img.rows)}, {Point2f(current_img.cols,0.0)},  {Point2f(current_img.cols, current_img.rows)} };
+
+		Mat result;
+		Mat perspective_matrix = getPerspectiveTransform(source, destination);
+
+		warpPerspective(current_img, result, perspective_matrix, result.size());
+		imshow("find Board", result);
+	}	
 	else {
 		cout << "no chessboard\n";
 	}
-	//findChessboardCorners(static_img, patternsize, output, CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE +CALIB_CB_FAST_CHECK);
-	imshow("findChessboard", input);
-
 	
-
-	cout << "The corners: " << corners << "\n";
 }
+
+// Part Five
 
 /// Extended confusion matrix for part Five
 /// Predicted		Ground Truth
@@ -745,7 +754,7 @@ int piece_type(Mat& img) {
 			else if (colours[0] == 0 && colours[1] == 0 && colours[2] == 0) {
 				white_pixels++;
 			}
-			else //if (colours[0] == 0 && colours[1] == 0 && colours[2] == 255)
+			else
 			{
 				empty_piece++;
 			}
@@ -753,19 +762,19 @@ int piece_type(Mat& img) {
 	}
 
 	//cout << "black : " << black_pixels << " white_pixels: " << white_pixels << " empty: " << empty_piece << "\n";
-	if (empty_piece > 1400) {
+	if (empty_piece > 1898) {
 		return EMPTY_SQUARE;
 	}
-	else if (black_pixels > white_pixels && black_pixels > 500) {
+	else if (black_pixels > white_pixels && black_pixels > 600) {
 		return BLACK_KING_ON_SQUARE;
 	}
-	else if (white_pixels > black_pixels && white_pixels > 500) {
+	else if (white_pixels > black_pixels && white_pixels > 700) {
 		return WHITE_KING_ON_SQUARE;
 	}
-	else if (black_pixels > white_pixels && black_pixels > 200) {
+	else if (black_pixels > white_pixels && black_pixels > 50) {
 		return BLACK_MAN_ON_SQUARE;
 	}
-	else if (white_pixels > black_pixels && white_pixels > 200) {
+	else if (white_pixels > black_pixels && white_pixels > 50) {
 		return WHITE_MAN_ON_SQUARE;
 	}
 	else {
@@ -799,7 +808,7 @@ void partFive (Mat& current_img, int current) {
 
 	int rowNum = 0;
 	int colNum = 0;
-	int index = 1;
+	int index = 0;
 	for (int j = 0; j < (result.cols); j += (indexCol)) {
 
 		for (int i = 0; i < (result.rows - indexRow); i += (indexRow)) {
@@ -809,7 +818,7 @@ void partFive (Mat& current_img, int current) {
 			if (isBlackSquare(colNum, rowNum) == true) {
 				int piece_no = piece_type(end);
 				if (piece_no == BLACK_MAN_ON_SQUARE) {
-					black += std::to_string(index) + ",";
+					black += std::to_string(index+1) + ",";
 					pieces[index] = BLACK_MAN_ON_SQUARE;
 					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[2][2]++;
@@ -828,7 +837,7 @@ void partFive (Mat& current_img, int current) {
 					}
 				}
 				else if (piece_no == WHITE_MAN_ON_SQUARE) {
-					white += std::to_string(index) + ",";
+					white += std::to_string(index + 1) + ",";
 					pieces[index] = WHITE_MAN_ON_SQUARE;
 					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[1][2]++;
@@ -866,7 +875,7 @@ void partFive (Mat& current_img, int current) {
 				}
 				else if (piece_no == WHITE_KING_ON_SQUARE) {
 					pieces[index] = WHITE_KING_ON_SQUARE;
-					white += "k" + std::to_string(index) + ",";
+					white += "k" + std::to_string(index + 1) + ",";
 					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[3][2]++;
 					}
@@ -885,7 +894,7 @@ void partFive (Mat& current_img, int current) {
 				}
 				else if (piece_no == BLACK_KING_ON_SQUARE) {
 					pieces[index] = BLACK_KING_ON_SQUARE;
-					black += "k" + std::to_string(index) + ",";
+					black += "k" + std::to_string(index + 1) + ",";
 					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[4][2]++;
 					}
@@ -917,6 +926,8 @@ void MyApplication()
 {
 	
 	// Part One + Part Two
+
+	
 	for (int i = 0; i < sizeof(GROUND_TRUTH_FOR_BOARD_IMAGES)/sizeof(GROUND_TRUTH_FOR_BOARD_IMAGES[0]); i++) {
 		black = "";
 		white = "";
@@ -943,25 +954,29 @@ void MyApplication()
 	cout << "White       " << confusionMatrix[1][0] << "       " << confusionMatrix[1][1] << "         " << confusionMatrix[1][2] << "\n";
 	cout << "Black       " << confusionMatrix[2][0] << "       " << confusionMatrix[2][1] << "        " << confusionMatrix[2][2] << "\n";
 
+	float recall = ((static_cast<float>(confusionMatrix[1][1]) + static_cast<float>(confusionMatrix[2][2])) / static_cast<float>((confusionMatrix[1][1]) + static_cast<float>(confusionMatrix[2][2]) + static_cast<float>(confusionMatrix[0][1]) + static_cast<float>(confusionMatrix[0][2]))) * 100.0f;
+	float precision = ((static_cast<float>(confusionMatrix[1][1]) + static_cast<float>(confusionMatrix[2][2])) / (static_cast<float>(confusionMatrix[1][1]) + static_cast<float>(confusionMatrix[2][2]) + static_cast<float>(confusionMatrix[1][0]) + static_cast<float>(confusionMatrix[2][0]))) * 100.0f;
+	float accuracy = ((static_cast<float>(confusionMatrix[0][0]) + static_cast<float>(confusionMatrix[1][1]) + static_cast<float>(confusionMatrix[2][2])) / (static_cast<float>(confusionMatrix[0][0]) + static_cast<float>(confusionMatrix[0][1]) + static_cast<float>(confusionMatrix[0][2]) + static_cast<float>(confusionMatrix[1][0]) + static_cast<float>(confusionMatrix[1][1]) + static_cast<float>(confusionMatrix[1][2])  + static_cast<float>(confusionMatrix[2][0]) + static_cast<float>(confusionMatrix[2][1]) + static_cast<float>(confusionMatrix[2][2]))) * 100.0f;
+	float specificty = static_cast<float>(confusionMatrix[0][0]) / (static_cast<float>(confusionMatrix[0][0]) + static_cast<float>(confusionMatrix[1][0]) + static_cast<float>(confusionMatrix[2][0])) * 100.0f;
+	cout << "Recall: " << recall << "%\n";
+	cout << "Precison: " << precision << "%\n";
+	cout << "Accuracy: " << accuracy << "%\n";
+	cout << "Specificity: " << specificty << "%\n";
 
 	// Part Three - Video
 	string video_filename("Media/DraughtsGame1.avi");
 	VideoCapture video;
 	video.open(video_filename);
-	partThree(video);
+	//partThree(video);
 	
 	// Part Four - Finding Corners
-	string background_file("Media/DraughtsGame1.jpg");
+	string background_file("Media/DraughtsGame1EmptyBoard.jpg");
 	Mat static_background_img = imread(background_file, -1);
 	partFour(static_background_img);
 
-	//string current_file("Media/" + GROUND_TRUTH_FOR_BOARD_IMAGES[68][0]);
-	//Mat file = imread(current_file, -1);
-	//Mat pt1 = findPieces(file);
-	//partFive(pt1, 62);
 	
 	// Part Five
-	for (int i = 0; i < 69; i++) {
+	for (int i = 0; i < sizeof(GROUND_TRUTH_FOR_BOARD_IMAGES) / sizeof(GROUND_TRUTH_FOR_BOARD_IMAGES[0]); i++) {
 		black = "";
 		white = "";
 		string background_filename("Media/" + GROUND_TRUTH_FOR_BOARD_IMAGES[i][0]);
@@ -988,6 +1003,16 @@ void MyApplication()
 	cout << "Black       " << extendedConfusionMatrix[2][0] << "       " << extendedConfusionMatrix[2][1] << "        " << extendedConfusionMatrix[2][2] << "        " << extendedConfusionMatrix[2][3] << "        " << extendedConfusionMatrix[2][4] << "\n";
 	cout << "White King  " << extendedConfusionMatrix[3][0] << "       " << extendedConfusionMatrix[3][1] << "        " << extendedConfusionMatrix[3][2] << "        " << extendedConfusionMatrix[3][3] << "        " << extendedConfusionMatrix[3][4] << "\n";
 	cout << "Black King  " << extendedConfusionMatrix[4][0] << "       " << extendedConfusionMatrix[4][1] << "        " << extendedConfusionMatrix[4][2] << "        " << extendedConfusionMatrix[4][3] << "        " << extendedConfusionMatrix[4][4] << "\n";
+
+	recall = (static_cast<float>(extendedConfusionMatrix[1][1]) + static_cast<float>(extendedConfusionMatrix[2][2]) + static_cast<float>(extendedConfusionMatrix[3][3]) + static_cast<float>(extendedConfusionMatrix[4][4])) / (static_cast<float>(extendedConfusionMatrix[1][1]) + static_cast<float>(extendedConfusionMatrix[2][2]) + static_cast<float>(extendedConfusionMatrix[3][3]) + static_cast<float>(extendedConfusionMatrix[4][4]) + static_cast<float>(extendedConfusionMatrix[0][1]) + static_cast<float>(extendedConfusionMatrix[0][2]) + static_cast<float>(extendedConfusionMatrix[0][3]) + static_cast<float>(extendedConfusionMatrix[0][4])) * 100.0f;
+	precision = (static_cast<float>(extendedConfusionMatrix[1][1]) + static_cast<float>(extendedConfusionMatrix[2][2]) + static_cast<float>(extendedConfusionMatrix[3][3]) + static_cast<float>(extendedConfusionMatrix[4][4])) / (static_cast<float>(extendedConfusionMatrix[1][1]) + static_cast<float>(extendedConfusionMatrix[2][2]) + static_cast<float>(extendedConfusionMatrix[3][3]) + static_cast<float>(extendedConfusionMatrix[4][4]) + static_cast<float>(extendedConfusionMatrix[1][0]) + static_cast<float>(extendedConfusionMatrix[2][0]) + static_cast<float>(extendedConfusionMatrix[3][0]) + static_cast<float>(extendedConfusionMatrix[4][0])) * 100.0f;
+	accuracy = ((static_cast<float>(extendedConfusionMatrix[0][0]) + static_cast<float>(extendedConfusionMatrix[1][1]) + static_cast<float>(extendedConfusionMatrix[2][2]) + static_cast<float>(extendedConfusionMatrix[3][3]) + static_cast<float>(extendedConfusionMatrix[3][3])) / (static_cast<float>(extendedConfusionMatrix[0][0]) + static_cast<float>(extendedConfusionMatrix[0][1]) + static_cast<float>(extendedConfusionMatrix[0][2]) + static_cast<float>(extendedConfusionMatrix[0][3]) + static_cast<float>(extendedConfusionMatrix[0][4]) + static_cast<float>(extendedConfusionMatrix[1][0]) + static_cast<float>(extendedConfusionMatrix[1][1]) + static_cast<float>(extendedConfusionMatrix[1][2]) + static_cast<float>(extendedConfusionMatrix[1][3]) + static_cast<float>(extendedConfusionMatrix[1][4]) + static_cast<float>(extendedConfusionMatrix[2][0]) + static_cast<float>(extendedConfusionMatrix[2][1]) + static_cast<float>(extendedConfusionMatrix[2][2]) + static_cast<float>(extendedConfusionMatrix[2][3]) + static_cast<float>(extendedConfusionMatrix[2][4]) + static_cast<float>(extendedConfusionMatrix[3][0]) + static_cast<float>(extendedConfusionMatrix[3][1]) + static_cast<float>(extendedConfusionMatrix[3][2]) + static_cast<float>(extendedConfusionMatrix[3][3]) + static_cast<float>(extendedConfusionMatrix[3][4]) + static_cast<float>(extendedConfusionMatrix[4][0]) + static_cast<float>(extendedConfusionMatrix[4][1]) + static_cast<float>(extendedConfusionMatrix[4][2]) + static_cast<float>(extendedConfusionMatrix[4][3]) + static_cast<float>(extendedConfusionMatrix[4][4]))) * 100.0f;
+	specificty = static_cast<float>(extendedConfusionMatrix[0][0]) / (static_cast<float>(extendedConfusionMatrix[0][0]) + static_cast<float>(extendedConfusionMatrix[1][0]) + static_cast<float>(extendedConfusionMatrix[2][0]) + static_cast<float>(extendedConfusionMatrix[3][0]) + static_cast<float>(extendedConfusionMatrix[4][0])) * 100.0f;
+	cout << "Recall: " << recall << "%\n";
+	cout << "Precison: " << precision << "%\n";
+	cout << "Accuracy: " << accuracy << "%\n";
+	cout << "Specificity: " << specificty << "%\n";
+
 
 	int pieces[32];
 	string black_pieces_filename("Media/DraughtsGame1BlackPieces.jpg");
