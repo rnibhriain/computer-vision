@@ -656,6 +656,7 @@ void partFour (Mat& static_img) {
 	DrawLines(hough_lines_image, hough_lines, Scalar(0, 255, 0));
 	imshow("hough", hough_lines_image);
 
+	// Use of contour following and straight line segment extraction.
 	Canny(static_img, binary_image, 255, 255 * 2);
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
@@ -667,8 +668,7 @@ void partFour (Mat& static_img) {
 		drawContours(drawing, contours, (int)i, colour, 2, LINE_8, hierarchy, 0);
 	}
 	imshow("Contours", drawing);
-
-	// Use of contour following and straight line segment extraction.
+	
 	findContours(canny_edge_image, contours, hierarchy, RETR_TREE, CHAIN_APPROX_NONE);
 
 	Mat clone = static_img.clone();
@@ -699,7 +699,7 @@ void partFour (Mat& static_img) {
 		Mat current_img = img_gray.clone();
 		Point2f innerLeft = corners[0];
 		Point2f topRight = corners[6];
-		Point2f bottomLeft = corners[corners.size() - 8];
+		Point2f bottomLeft = corners[corners.size() - 7];
 		Point2f bottomRight = corners[corners.size() - 1];
 		Point2f source[4] = { innerLeft , topRight, bottomLeft , bottomRight };
 		Point2f destination[4] = { {0.0, 0.0}, {Point2f(0.0, current_img.rows)}, {Point2f(current_img.cols,0.0)},  {Point2f(current_img.cols, current_img.rows)} };
@@ -735,6 +735,19 @@ int extendedConfusionMatrix [5][5] =
 	{0, 0, 0, 0, 0}
 };
 
+int current_index = 0;
+
+bool isKing(int colour) {
+	if (current_index == 1 || current_index == 3 || current_index == 5 || current_index ==  7 && colour == BLACK_MAN_ON_SQUARE) {
+
+		return true;
+	}
+	else if (current_index == 29 || current_index == 30 || current_index == 31 || current_index == 32 && colour == WHITE_MAN_ON_SQUARE) {
+		return true;
+	}
+	return false;
+}
+
 int piece_type(Mat& img) {
 
 	Vec3b colours;
@@ -760,21 +773,19 @@ int piece_type(Mat& img) {
 			}
 		}
 	}
-
-	//cout << "black : " << black_pixels << " white_pixels: " << white_pixels << " empty: " << empty_piece << "\n";
 	if (empty_piece > 1898) {
 		return EMPTY_SQUARE;
 	}
-	else if (black_pixels > white_pixels && black_pixels > 600) {
-		return BLACK_KING_ON_SQUARE;
-	}
-	else if (white_pixels > black_pixels && white_pixels > 700) {
-		return WHITE_KING_ON_SQUARE;
-	}
 	else if (black_pixels > white_pixels && black_pixels > 50) {
+		if (isKing(BLACK_MAN_ON_SQUARE)) {
+			return BLACK_KING_ON_SQUARE;
+		}
 		return BLACK_MAN_ON_SQUARE;
 	}
 	else if (white_pixels > black_pixels && white_pixels > 50) {
+		if (isKing(WHITE_MAN_ON_SQUARE)) {
+			return WHITE_KING_ON_SQUARE;
+		} 
 		return WHITE_MAN_ON_SQUARE;
 	}
 	else {
@@ -808,7 +819,7 @@ void partFive (Mat& current_img, int current) {
 
 	int rowNum = 0;
 	int colNum = 0;
-	int index = 0;
+	current_index = 0;
 	for (int j = 0; j < (result.cols); j += (indexCol)) {
 
 		for (int i = 0; i < (result.rows - indexRow); i += (indexRow)) {
@@ -818,100 +829,100 @@ void partFive (Mat& current_img, int current) {
 			if (isBlackSquare(colNum, rowNum) == true) {
 				int piece_no = piece_type(end);
 				if (piece_no == BLACK_MAN_ON_SQUARE) {
-					black += std::to_string(index+1) + ",";
-					pieces[index] = BLACK_MAN_ON_SQUARE;
-					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
+					black += std::to_string(current_index +1) + ",";
+					pieces[current_index] = BLACK_MAN_ON_SQUARE;
+					if (current_board.mBoardGroundTruth[current_index] == BLACK_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[2][2]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == EMPTY_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == EMPTY_SQUARE) {
 						extendedConfusionMatrix[2][0]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == WHITE_MAN_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == WHITE_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[2][1]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == WHITE_KING_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == WHITE_KING_ON_SQUARE) {
 						extendedConfusionMatrix[2][3]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == BLACK_KING_ON_SQUARE) {
 						extendedConfusionMatrix[2][4]++;
 					}
 				}
 				else if (piece_no == WHITE_MAN_ON_SQUARE) {
-					white += std::to_string(index + 1) + ",";
-					pieces[index] = WHITE_MAN_ON_SQUARE;
-					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
+					white += std::to_string(current_index + 1) + ",";
+					pieces[current_index] = WHITE_MAN_ON_SQUARE;
+					if (current_board.mBoardGroundTruth[current_index] == BLACK_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[1][2]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == EMPTY_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == EMPTY_SQUARE) {
 						extendedConfusionMatrix[1][0]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == WHITE_MAN_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == WHITE_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[1][1]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == WHITE_KING_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == WHITE_KING_ON_SQUARE) {
 						extendedConfusionMatrix[1][3]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == BLACK_KING_ON_SQUARE) {
 						extendedConfusionMatrix[1][4]++;
 					}
 				}
 				else if (piece_no == EMPTY_SQUARE) {
-					pieces[index] = EMPTY_SQUARE;
-					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
+					pieces[current_index] = EMPTY_SQUARE;
+					if (current_board.mBoardGroundTruth[current_index] == BLACK_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[0][2]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == EMPTY_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == EMPTY_SQUARE) {
 						extendedConfusionMatrix[0][0]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == WHITE_MAN_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == WHITE_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[0][1]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == WHITE_KING_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == WHITE_KING_ON_SQUARE) {
 						extendedConfusionMatrix[0][3]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == BLACK_KING_ON_SQUARE) {
 						extendedConfusionMatrix[0][4]++;
 					}
 				}
 				else if (piece_no == WHITE_KING_ON_SQUARE) {
-					pieces[index] = WHITE_KING_ON_SQUARE;
-					white += "k" + std::to_string(index + 1) + ",";
-					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
+					pieces[current_index] = WHITE_KING_ON_SQUARE;
+					white += "k" + std::to_string(current_index + 1) + ",";
+					if (current_board.mBoardGroundTruth[current_index] == BLACK_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[3][2]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == EMPTY_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == EMPTY_SQUARE) {
 						extendedConfusionMatrix[3][0]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == WHITE_MAN_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == WHITE_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[3][1]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == WHITE_KING_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == WHITE_KING_ON_SQUARE) {
 						extendedConfusionMatrix[3][3]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == BLACK_KING_ON_SQUARE) {
 						extendedConfusionMatrix[3][4]++;
 					}
 				}
 				else if (piece_no == BLACK_KING_ON_SQUARE) {
-					pieces[index] = BLACK_KING_ON_SQUARE;
-					black += "k" + std::to_string(index + 1) + ",";
-					if (current_board.mBoardGroundTruth[index] == BLACK_MAN_ON_SQUARE) {
+					pieces[current_index] = BLACK_KING_ON_SQUARE;
+					black += "k" + std::to_string(current_index + 1) + ",";
+					if (current_board.mBoardGroundTruth[current_index] == BLACK_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[4][2]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == EMPTY_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == EMPTY_SQUARE) {
 						extendedConfusionMatrix[4][0]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == WHITE_MAN_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == WHITE_MAN_ON_SQUARE) {
 						extendedConfusionMatrix[4][1]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == WHITE_KING_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == WHITE_KING_ON_SQUARE) {
 						extendedConfusionMatrix[4][3]++;
 					}
-					else if (current_board.mBoardGroundTruth[index] == BLACK_KING_ON_SQUARE) {
+					else if (current_board.mBoardGroundTruth[current_index] == BLACK_KING_ON_SQUARE) {
 						extendedConfusionMatrix[4][4]++;
 					}
 				}
-				index++;
+				current_index++;
 			}
 			rowNum++;
 		}
@@ -929,17 +940,17 @@ void MyApplication()
 
 	
 	for (int i = 0; i < sizeof(GROUND_TRUTH_FOR_BOARD_IMAGES)/sizeof(GROUND_TRUTH_FOR_BOARD_IMAGES[0]); i++) {
-		black = "";
-		white = "";
+		black = " ";
+		white = " ";
 		string background_filename("Media/" + GROUND_TRUTH_FOR_BOARD_IMAGES[i][0]);
 		Mat static_background_image = imread(background_filename, -1);
 
 		if (static_background_image.empty())
 			cout << "Cannot open image file: " << background_filename << endl;
 		else {
-			Mat pt1 = partOne(static_background_image);
+			//Mat pt1 = partOne(static_background_image);
 
-			partTwo(pt1, i);
+			//partTwo(pt1, i);
 			cout << i << " white: " << white << "\n";
 			cout << i << " black: " << black << "\n";
 		}
@@ -972,7 +983,7 @@ void MyApplication()
 	// Part Four - Finding Corners
 	string background_file("Media/DraughtsGame1EmptyBoard.jpg");
 	Mat static_background_img = imread(background_file, -1);
-	partFour(static_background_img);
+	//partFour(static_background_img);
 
 	
 	// Part Five
