@@ -1,4 +1,5 @@
 # Computer Vision
 Assignments for CSU44053
 - Draughts Assignment - OpenCVExample
-- Exam Question - "Sample Exam.pdf"
+- Exam Answer - "Sample Exam.pdf"
+- Exam Question - "Exam Question.pdf"
